@@ -1,0 +1,6 @@
+{
+  "name": "Planform - Mobile Architectural Floor Plan PWA",
+  "description": "Professional mobile-first architectural planning application for drawing floor plans, precise wall snapping, dimension editing, and 3D isometric visualization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

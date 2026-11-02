@@ -1,0 +1,1334 @@
+BUILD A COMPLETE MOBILE-FIRST ARCHITECTURE PLANNING PWA FROM SCRATCH
+
+0. Your Role and Mission
+
+Act as a senior software architect, experienced computational geometry engineer, mobile UX designer, React and TypeScript developer, and 3D graphics engineer.
+
+Build a complete, functional, mobile-first architectural floor-plan application called Planform.
+
+This is a brand-new, independent project. Do not assume that any previous code, components, project files, geometry models, or UI exist. Create the complete application from scratch.
+
+The first version must focus on one thing: making architectural wall drawing, snapping, selection, dimension editing, and 3D visualization reliable.
+
+The goal is not to create a static mockup, a dashboard prototype, or a collection of buttons that look functional. The goal is a working application in which the geometry, controls, UI, local persistence, and 3D visualization are connected and operational.
+
+Mandatory execution rules
+
+1. Implement the actual application. Do not stop after presenting a plan or explaining the proposed architecture.
+2. Create all necessary files, components, modules, styles, and configurations.
+3. Build a coherent, working end-to-end application before spending time on decorative details.
+4. Keep geometry calculations separate from UI components.
+5. Use TypeScript types and strict input validation to prevent invalid states.
+6. Verify the core operations using automated tests wherever possible.
+7. Run the available type checks, tests, and production build. Fix errors rather than merely describing them.
+8. Never simulate a feature that has not actually been implemented.
+9. Do not claim a test passed unless it was actually run successfully.
+10. If the environment prevents a particular verification step, state exactly what remains unverified.
+11. Do not ask questions before implementation. Use the defaults specified below.
+12. Do not add unnecessary dependencies, external APIs, authentication, paid services, or backend infrastructure.
+13. Do not sacrifice editing correctness for visual appearance.
+14. If implementation requires multiple internal steps, complete the steps in sequence without abandoning the project after the first working screen.
+
+1. Product Definition
+
+Planform is a mobile-first architectural planning application designed initially for smartphones.
+
+Its central workflow is:
+
+1. Open the application.
+2. Create a building project.
+3. Enter the project's 2D floor-plan editor.
+4. Draw walls by connecting their endpoints.
+5. Select, move, resize, and precisely adjust individual walls.
+6. Switch to a clean 3D isometric view to inspect the building.
+7. Return to the 2D plan to continue editing.
+8. Automatically save the project locally.
+
+The app must be installable as a Progressive Web App and remain useful without a permanent internet connection after its assets have been cached.
+
+Fundamental product rules
+
+- All interface text must be in English.
+- The primary device is a smartphone.
+- The application must work in portrait and landscape orientations.
+- The 2D plan is the only editing environment.
+- The 3D isometric view is strictly for visualization.
+- The 3D scene must accurately reflect the current plan.
+- All geometry must be based on actual model coordinates, not approximate screen positions.
+- A wall must be selectable immediately after it has been drawn.
+- Every selected-wall operation must have predictable, explicitly defined behavior.
+- Every destructive operation must be reversible when possible.
+- Data must persist locally without requiring registration.
+
+2. Technology and Project Architecture
+
+Use the following stack where supported by the development environment:
+
+- React for the interface.
+- TypeScript with strict typing for application logic.
+- Vite for development and production builds.
+- SVG for the 2D drawing viewport, geometric rendering, selection, and editing handles.
+- Three.js for the 3D building visualization.
+- Three.js OrbitControls for stable 3D orbit, pan, and zoom.
+- A compatible Vite PWA integration for the manifest, service worker, and offline application shell.
+- IndexedDB for persistent local project data.
+- A lightweight, consistent icon library such as Lucide when compatible with the environment.
+- A suitable automated test runner for geometry and state-management tests.
+
+Use compatible package versions. Do not mix APIs from different major versions or introduce deprecated imports.
+
+If the environment already has a supported equivalent, adapt to that environment without breaking the build.
+
+Suggested code organization
+
+Keep the application modular. A reasonable structure is:
+
+- "src/app/" — routing, application shell, and global state.
+- "src/pages/" — project dashboard and project editor.
+- "src/components/" — reusable UI components, menus, dialogs, and toolbars.
+- "src/plan/" — SVG viewport, drawing interactions, selection, and snapping.
+- "src/geometry/" — pure geometry functions, coordinate transformations, and validation.
+- "src/model/" — project, point, wall, and persistence types.
+- "src/history/" — undo and redo logic.
+- "src/isometric/" — Three.js scene, camera, wall meshes, and controls.
+- "src/storage/" — IndexedDB operations, migrations, import, and export.
+- "src/styles/" — responsive design system and global styles.
+- "public/" — PWA manifest, icons, and static assets.
+- "tests/" — geometry, editing, snapping, and persistence tests.
+
+This is a guide, not a reason to create unnecessary abstractions. Keep each module understandable and focused.
+
+Avoid putting the entire application into a single giant React component.
+
+3. Application Screens and Navigation
+
+The application must have three clearly defined UI states.
+
+A. Project Dashboard
+
+This is the application's initial screen.
+
+Include:
+
+- A refined Planform wordmark or simple geometric logo.
+- A clear application heading.
+- A prominent “New Project” action.
+- A list of existing projects.
+- A useful empty state for first-time users.
+- Project names and their last-modified dates.
+- Project opening, renaming, and deletion actions.
+
+Each project should appear in a compact, well-designed card or list item suitable for mobile screens.
+
+Deleting a project must require confirmation.
+
+The application must not force the user through a login or onboarding process before allowing them to draw.
+
+B. New Project Screen or Dialog
+
+Provide a simple project-creation form with the following fields:
+
+- Project Name, required.
+- Measurement Units, with meters as the default.
+- Default Wall Height, initially 3.00 m.
+- Default Wall Thickness, initially 0.15 m.
+
+Validate all numeric fields.
+
+Project names must not be blank. Invalid dimensions must not be accepted.
+
+When the user creates a project, initialize its geometry data correctly and open the 2D plan editor.
+
+Provide sensible defaults so the user can start drawing immediately.
+
+C. Project Editor
+
+The editor has two mutually exclusive workspaces:
+
+- Plan
+- 3D View
+
+Use a compact, clearly labeled segmented control or equivalent navigation component.
+
+When the user switches from Plan to 3D View, replace the plan viewport with the 3D viewport. Do not show a split screen on a phone.
+
+When switching back to Plan, restore the plan editor with the same project geometry.
+
+The project name and save status should remain accessible.
+
+Keep the 3D controls visually separate from the 2D editing tools.
+
+Do not navigate away from unsaved work. Since saving is automatic, persist pending changes before switching projects or closing project dialogs.
+
+4. Single Source of Truth for Geometry
+
+This requirement is critical.
+
+The project must maintain one authoritative geometric model shared by the 2D and 3D views.
+
+Never maintain separate, independently editable versions of the plan and the 3D building.
+
+A change to the plan must update the model, which must then update the 3D representation.
+
+The 3D scene must never write geometric changes back to the model.
+
+Coordinate system
+
+Use architectural world coordinates measured in meters.
+
+Define the 2D coordinate system as follows:
+
+- Positive X points to the right.
+- Positive Y points upward.
+- Angles are measured from the positive X axis.
+- Positive angles rotate counterclockwise.
+- Internally store coordinates and dimensions at adequate floating-point precision.
+- Round values only for display, not during intermediate calculations.
+
+The SVG renderer must correctly convert between world coordinates and screen coordinates, taking account of its vertical axis direction.
+
+This conversion must work consistently at every zoom and pan level.
+
+Do not store model coordinates in screen pixels.
+
+Data model
+
+Use stable, unique IDs for projects, walls, and geometric points.
+
+A suitable conceptual model is:
+
+Project
+
+- ID.
+- Name.
+- Creation date.
+- Last-modified date.
+- Measurement unit.
+- Default wall height.
+- Default wall thickness.
+- Point collection.
+- Wall collection.
+- Data schema version.
+
+Point
+
+- ID.
+- X coordinate.
+- Y coordinate.
+
+Wall
+
+- ID.
+- Start-point ID.
+- End-point ID.
+- Thickness.
+- Height.
+- Creation metadata if useful.
+
+A wall references two point records rather than owning duplicated endpoint coordinates.
+
+Multiple walls can reference the same point ID to represent a real geometric connection.
+
+This shared-point model is essential for reliable snapping and junction management.
+
+Model integrity rules
+
+- Every wall must reference two existing points.
+- Every wall must have a unique ID.
+- Both endpoints must be different points unless the geometry is explicitly rejected as invalid.
+- Wall length must be greater than zero and meet a sensible minimum, initially 0.05 m.
+- Wall thickness and height must be positive finite numbers.
+- Invalid, missing, infinite, or non-numeric coordinates must never enter the saved project.
+- Remove orphaned points after geometry operations when they are no longer referenced.
+- Do not allow invalid references after deleting, splitting, or reconnecting walls.
+- Every completed operation must leave the model in a valid state.
+
+Implement a reusable model-validation function and invoke it at appropriate transaction boundaries.
+
+5. Wall Geometry and Mathematical Accuracy
+
+Implement geometry calculations in pure, testable functions.
+
+At minimum, implement:
+
+- Distance between two points.
+- Wall length.
+- Wall angle.
+- Point projection onto a line segment.
+- Point-to-segment distance.
+- Point equality within a defined tolerance.
+- Endpoint and intersection detection.
+- Segment intersection calculations.
+- Snap candidate scoring.
+- Wall endpoint updates.
+- Wall translation.
+- Wall length adjustment.
+- Wall angle adjustment.
+- Point and connection cleanup.
+- Wall geometry validation.
+- Conversion between screen and world coordinates.
+- Normalization of displayed angles.
+
+For a wall with endpoints A and B:
+
+"length = sqrt((Bx - Ax)^2 + (By - Ay)^2)"
+
+"angle = atan2(By - Ay, Bx - Ax)"
+
+Convert radians to degrees only for displaying or accepting degree-based input.
+
+Avoid rounding geometry values after every drag event. Repeated rounding leads to cumulative errors and broken junctions.
+
+The geometry module must not depend on React components, DOM events, SVG elements, or Three.js.
+
+6. Wall Drawing Tool
+
+Implement a complete wall-drawing interaction.
+
+The toolbar must provide explicit modes:
+
+- Select.
+- Draw Wall.
+- Pan, or an equivalently clear viewport navigation mode.
+
+The selected mode must be visually obvious.
+
+Drawing workflow
+
+In Draw Wall mode:
+
+1. The user taps or clicks to define the start point.
+2. A wall preview follows the pointer or finger.
+3. The preview displays clear endpoint and snap indicators.
+4. The user taps or clicks to define the endpoint.
+5. The wall is validated and created.
+6. The new wall immediately becomes a selectable model object.
+7. The geometry is committed as one undoable operation.
+
+Support pointer-based interactions for mouse, pen, and touch.
+
+The preview must update in real time without creating permanent model points on every pointer move.
+
+Continuous drawing
+
+Provide an optional, clearly controlled chained-wall drawing behavior.
+
+When enabled, the next wall begins from the previous wall's endpoint after a segment is completed.
+
+The user must be able to finish the chain or cancel the current drawing operation without adding unwanted walls.
+
+Do not create a zero-length wall when the user taps twice at the same location.
+
+Do not commit a wall that is below the minimum permitted length.
+
+Provide clear Finish and Cancel behavior where appropriate.
+
+Drawing feedback
+
+Show:
+
+- A temporary wall preview.
+- Current length while drawing.
+- Current angle when useful.
+- A highlighted endpoint when snapping is available.
+- A visible indication of which snap rule was used.
+- A different appearance for a completed wall and the active preview.
+
+The preview, snap markers, and dimension labels must not become part of the actual building geometry.
+
+7. Reliable Snapping System
+
+Snapping must operate on world geometry but use screen-space tolerances for usability.
+
+The snap tolerance should initially be approximately 12–16 CSS pixels, configurable if necessary.
+
+Convert screen-space tolerance to an appropriate world-space distance using the current viewport transformation and zoom.
+
+Snapping must remain usable at both high and low zoom levels.
+
+Snap targets
+
+Support the following targets:
+
+1. Existing wall endpoints.
+2. Existing geometric junctions.
+3. Intersections between wall segments.
+4. Points along an existing wall when creating a valid intersection.
+5. Grid points.
+6. Optional orthogonal alignment at 0° and 90°.
+7. Optional angle increments such as 15°, 30°, and 45°.
+
+Expose simple controls for enabling or disabling grid snapping and angular snapping.
+
+Endpoint snapping must be enabled by default.
+
+Snap priority
+
+When multiple candidates are nearby, use a predictable priority:
+
+1. Existing endpoint or junction.
+2. A valid wall intersection.
+3. Orthogonal or enabled angular alignment.
+4. Grid snapping.
+5. Free placement.
+
+Use distance, target type, and deterministic tie-breaking to avoid flickering between candidates.
+
+Once a candidate is chosen during an interaction, the indicator should remain reasonably stable unless another candidate becomes clearly preferable.
+
+Do not allow grid snapping to pull an endpoint away from a stronger existing junction snap.
+
+Actual connections, not visual illusions
+
+If a new wall endpoint snaps to an existing point, it must reference the same point ID.
+
+If a new wall endpoint snaps to the interior of an existing wall:
+
+- Calculate the exact intersection in world coordinates.
+- Split the existing wall at that point into two collinear segments.
+- Preserve the original wall's height and thickness.
+- Preserve the existing wall's overall geometry.
+- Create the appropriate shared point references.
+- Keep the operation undoable as one transaction.
+
+If the snap point is extremely close to an existing endpoint, use that endpoint rather than creating a tiny extra segment.
+
+Do not display a snap indicator unless the final model can preserve the indicated connection correctly.
+
+Snapping validation
+
+Prevent accidental creation of:
+
+- Tiny wall segments.
+- Duplicate endpoints that should be connected.
+- Visually overlapping but geometrically disconnected junctions.
+- Duplicate wall segments.
+- Unintended zero-length segments.
+- Invalid intersections.
+
+The user must be able to draw a connected sequence of walls without manually correcting tiny gaps.
+
+8. Wall Selection
+
+Selecting and editing a completed wall is a core feature, not an optional enhancement.
+
+In Select mode, tapping or clicking a wall must select it.
+
+The selected wall must display:
+
+- A distinct selection outline.
+- Visible start and end handles.
+- Its length.
+- Its angle.
+- A clear selected state in the contextual inspector.
+
+The selection must remain stable while the user edits numeric fields.
+
+Tapping empty space should deselect the wall unless the user is performing a viewport-navigation gesture.
+
+Tapping another wall must select that wall without affecting the geometry of the previous wall.
+
+For reliable touch selection, use an invisible or visually subtle hit area wider than the visible wall itself.
+
+The hit area must be sized in screen space so that a wall remains selectable even when zoomed out.
+
+The hit area must not change the wall's actual thickness or geometry.
+
+If two walls overlap visually, use a deterministic selection rule and allow cycling through overlapping objects or presenting a compact selection list when necessary.
+
+Do not allow dimension annotations or selection handles to block the wall's own selection logic.
+
+9. Independent Editing of a Selected Wall
+
+This section overrides any default behavior that would unintentionally propagate geometry changes to neighboring walls.
+
+Every standard edit must affect only the selected wall.
+
+The application must not silently move, resize, rotate, or otherwise distort other walls because they share an endpoint with the selected wall.
+
+Wall editing panel
+
+When a wall is selected, display a compact contextual inspector containing:
+
+- Length.
+- Angle.
+- Wall height.
+- Wall thickness.
+- Fixed Endpoint: Start or End.
+- Optional precise position information if the available screen space permits.
+
+All fields must reflect the selected wall's actual geometry.
+
+All dimensions must use the project's selected unit and display it consistently.
+
+A. Change wall length
+
+When the user changes the Length field:
+
+- Preserve the selected wall's angle.
+- Keep the chosen fixed endpoint stationary.
+- Recalculate the other endpoint.
+- Update the selected wall's geometry.
+- Recalculate its displayed values.
+- Update the 3D view.
+- Save the change.
+- Add one undoable history entry.
+
+Do not change the lengths or orientations of neighboring walls.
+
+B. Change wall angle
+
+When the user changes the Angle field:
+
+- Preserve the selected wall's length.
+- Keep the chosen fixed endpoint stationary.
+- Recalculate the other endpoint using trigonometry.
+- Update the selected wall.
+- Update the displayed length and angle immediately after committing.
+- Update the 3D scene.
+- Save the change.
+- Add one undoable history entry.
+
+Do not rotate the entire plan.
+
+C. Drag a wall endpoint
+
+Dragging a start or end handle must allow precise editing of that endpoint.
+
+During dragging:
+
+- Show a live preview.
+- Calculate length and angle continuously.
+- Apply snapping.
+- Keep the other endpoint fixed unless a different operation has explicitly been selected.
+- Update the selected wall only.
+- Commit one undoable operation when the drag finishes.
+
+If the moved endpoint was shared with neighboring walls, detach it from that shared point before moving it independently. Do not move the neighboring walls.
+
+If the endpoint is snapped to another valid point at its final location, connect it to that point.
+
+D. Move the entire selected wall
+
+Dragging the wall body must move the selected wall without rotating it or changing its length.
+
+Both of its endpoints should translate by the same vector.
+
+If either endpoint is shared with other walls, detach the selected wall's endpoint from the shared point before moving it independently. The neighboring walls must remain in place.
+
+Allow the final endpoints to reconnect through valid snapping when they land on appropriate existing points.
+
+E. Edit wall height or thickness
+
+Changing height or thickness in the selected-wall inspector must affect only the selected wall.
+
+It must update its 3D representation without changing unrelated wall properties.
+
+Changing project default dimensions must affect newly created walls by default, not silently change existing walls.
+
+If an Apply to Existing Walls action is ever included, it must be explicit and require confirmation.
+
+Numeric input behavior
+
+- Validate inputs before committing.
+- Support decimal values.
+- Prevent "NaN", infinity, negative dimensions, and zero-length results.
+- Allow temporary incomplete text while the user is typing.
+- Commit a valid input on Enter, blur, or an explicit Apply action.
+- Reject invalid input without corrupting the model.
+- Provide useful inline validation feedback.
+- Avoid changing the geometry on every intermediate keystroke.
+- Do not steal focus from a field during model updates.
+
+10. Junction and Connection Rules
+
+Connected walls create a special editing problem, so junction behavior must be explicitly defined.
+
+Default policy: Edit Selected Wall Only
+
+This is the default policy for all wall transformations.
+
+When a selected wall is resized, rotated, or moved, neighboring walls stay where they are.
+
+If an endpoint must move away from a shared point, create a new point for the selected wall endpoint and update only that wall's endpoint reference.
+
+The old shared point must remain available to the other connected walls.
+
+If the selected wall endpoint is moved back onto an existing endpoint and a valid snap is detected, it may reconnect to that point.
+
+Required visual feedback
+
+Show whether each endpoint is connected or independent.
+
+If an edit disconnects an endpoint, give subtle, clear feedback.
+
+Do not silently pretend that two endpoints are still connected if they are no longer geometrically connected.
+
+Do not introduce automatic neighbor movement as a hidden side effect.
+
+A future explicit junction-editing feature may move an entire connected junction, but it is outside the required first-version scope.
+
+Connection integrity
+
+Whenever connections are changed:
+
+- Update point references atomically.
+- Remove unused points.
+- Preserve other walls' geometry.
+- Prevent dangling IDs.
+- Preserve wall dimensions.
+- Recompute affected derived data.
+- Support undo and redo.
+
+For an operation that splits a wall at an intersection, preserve its original geometry and make the split part of the same undoable transaction.
+
+11. Mobile Plan Viewport
+
+The drawing area must be designed around touch interaction, not a desktop mouse workflow.
+
+Viewport requirements
+
+Implement:
+
+- Smooth pan.
+- Pinch-to-zoom with two fingers.
+- Zoom controls as an accessible alternative.
+- A Fit Plan action.
+- A Reset View action.
+- A visible grid.
+- Accurate model-to-screen coordinate transformations.
+- Correct pointer capture during drags.
+- Reliable gesture cancellation.
+- A visible indication of the current drawing or selection mode.
+
+The grid should stay visually consistent while zooming.
+
+Avoid an excessively dense grid at low zoom. Adjust grid detail according to scale.
+
+Gesture separation
+
+Avoid ambiguous gestures.
+
+A one-finger drag on a selected wall should move the wall or its selected handle, depending on the starting target.
+
+A one-finger drag in the Pan tool should move the viewport.
+
+A two-finger gesture should pan or zoom the viewport without accidentally drawing a wall or moving a selected endpoint.
+
+Pinching must not create walls.
+
+A pinch-to-zoom interaction must not change a selected wall's dimensions.
+
+After a pointer is canceled or lost, release all temporary interaction state and do not commit an unintended operation.
+
+Use Pointer Events and pointer capture appropriately.
+
+Apply suitable "touch-action" settings to the drawing viewport so browser scrolling and gesture handling do not conflict with the editor.
+
+Avoid preventing useful browser behavior globally when only the drawing viewport needs custom interaction.
+
+Coordinate correctness
+
+All drawing and drag operations must use the inverse of the current viewport transform.
+
+Never assume that one CSS pixel equals one world unit.
+
+Snapping must use the current scale.
+
+Test drawing, selecting, dragging, and editing at multiple zoom levels and after panning the viewport.
+
+12. Professional and Responsive Interface Design
+
+The current desired aesthetic is refined, modern, architectural, and premium.
+
+Avoid a dry engineering prototype or a generic admin dashboard.
+
+Visual direction
+
+Use:
+
+- A restrained neutral color palette.
+- A clean architectural drawing surface.
+- Dark charcoal or slate interface elements.
+- A subtle, carefully selected accent color.
+- Clear selection and snap-state colors.
+- Fine borders and subtle shadows.
+- Consistent spacing.
+- Carefully balanced corner radii.
+- Smooth but restrained transitions.
+- Highly legible typography.
+- Compact, purposeful controls.
+
+The plan must have a clear visual hierarchy.
+
+The grid should be subtle enough to support drawing without overpowering the geometry.
+
+Selected walls should be easy to recognize immediately.
+
+Snap indicators, handles, and dimension labels must remain distinguishable against the background.
+
+Typography
+
+Use a modern, legible sans-serif font.
+
+Use a sensible font-size scale for headings, labels, numeric dimensions, buttons, and helper text.
+
+Do not use oversized headings in the editor.
+
+Use consistent font weights and line heights.
+
+Prefer bundled fonts or a reliable system-font fallback so the interface still works offline.
+
+All menus, tooltips, dialogs, buttons, validation messages, and accessibility labels must use English.
+
+Responsive dimensions
+
+Design and test at approximately:
+
+- 320 CSS pixels.
+- 360 CSS pixels.
+- 390 CSS pixels.
+- 430 CSS pixels.
+
+Support portrait and landscape layouts.
+
+Use responsive sizing and viewport-aware heights.
+
+Respect device safe-area insets.
+
+Avoid fixed desktop-width inspectors.
+
+Do not allow horizontal page overflow.
+
+Do not let toolbars consume most of the viewport.
+
+Keep the drawing canvas as large as practical.
+
+Use a compact top bar and an accessible bottom toolbar where appropriate.
+
+The selected-wall inspector should adapt to narrow screens. It may use a compact bottom sheet or collapsible contextual panel rather than covering the entire drawing area.
+
+Numeric inputs must remain usable when the on-screen keyboard is open.
+
+When a field receives focus, keep it visible and prevent the keyboard from permanently hiding the relevant controls.
+
+Support safe scrolling within a panel when necessary, without causing the entire drawing canvas to scroll accidentally.
+
+Interface states
+
+Design the following states deliberately:
+
+- Empty project dashboard.
+- New project dialog.
+- Empty plan editor.
+- Drawing in progress.
+- Wall selected.
+- Wall being resized.
+- Wall being moved.
+- Snap available.
+- Invalid numeric input.
+- Saving.
+- Saved.
+- Project loading.
+- Empty 3D scene.
+- 3D scene loading or rebuilding.
+- Storage error.
+- Import error.
+
+Use concise feedback rather than intrusive alerts for routine operations.
+
+Use confirmation dialogs for destructive operations.
+
+Every button must have a meaningful action. Do not include decorative buttons that do nothing.
+
+13. Stable 3D Isometric View
+
+Use Three.js to construct a genuine 3D representation of the current project.
+
+The 3D view must be visual-only.
+
+Do not display editable wall endpoint handles or allow a user to modify wall geometry by dragging objects in 3D.
+
+Geometry generation
+
+For every model wall, construct a 3D wall mesh using:
+
+- Its two endpoints.
+- Its actual length.
+- Its height.
+- Its thickness.
+- Its orientation in the 2D plan.
+
+Map 2D X to 3D X, 2D Y to 3D Z, and architectural height to 3D Y.
+
+The model must use the same units and dimensions as the 2D plan.
+
+Do not approximate every wall as a fixed-length object.
+
+Do not use decorative placeholder geometry instead of the real wall model.
+
+Wall height and thickness must be respected.
+
+The same wall positions must be visible in both views.
+
+Wall intersections should not exhibit obvious gaps caused by an incorrect center point or rotation calculation.
+
+A simple ground plane and subtle reference grid may be included.
+
+The first version does not require a roof, doors, windows, furniture, materials editor, or photorealistic rendering.
+
+Camera implementation
+
+Use a stable orthographic camera for a predictable architectural isometric-style view, with appropriate orbit controls.
+
+Initialize the camera at a useful three-quarter isometric angle.
+
+The camera must have a clearly defined target near the center of the building.
+
+Provide controls for:
+
+- Horizontal orbit.
+- Vertical orbit.
+- Zoom.
+- Pan.
+- Fit Model.
+- Reset Camera.
+
+The camera must never flip unpredictably or become stuck under the ground plane.
+
+Constrain the vertical orbit to a sensible range.
+
+Prevent accidental uncontrolled camera rotation and sudden jumps.
+
+Set reasonable minimum and maximum zoom values.
+
+Keep the camera's up direction consistent.
+
+Use appropriate damping for smooth motion.
+
+On touchscreens, the camera must respond predictably to one-finger rotation and two-finger gestures, in accordance with the control configuration.
+
+Camera stability rules
+
+These rules are mandatory:
+
+- Do not recreate the WebGL renderer whenever React state changes.
+- Do not recreate the camera whenever a wall changes.
+- Do not reset the camera whenever the project geometry updates.
+- Do not change the camera target on every frame.
+- Do not reset the orbit controls when selecting or editing a wall in the 2D plan.
+- Do not animate the camera automatically in the background.
+- Do not enable auto-rotation by default.
+
+Preserve the user's camera position, target, and zoom when the wall geometry changes.
+
+When the 3D view is opened for the first time, fit the current model into the viewport.
+
+When the user explicitly selects Fit Model, calculate an appropriate framing based on the current building bounds.
+
+When the user selects Reset Camera, return to the defined default architectural view.
+
+Do not let camera-fitting logic run continuously.
+
+Efficient updates
+
+Maintain the Three.js renderer and scene for the lifetime of the 3D view.
+
+Update wall meshes when the geometry model changes.
+
+Dispose of obsolete geometries and materials when they are removed.
+
+Clean up animation loops and event listeners when the 3D view unmounts.
+
+Handle window and viewport resizing correctly.
+
+Avoid memory leaks and duplicate rendering loops.
+
+Keep the implementation efficient on mobile devices.
+
+3D presentation
+
+Use a professional, neutral material palette.
+
+Keep wall silhouettes readable.
+
+Avoid excessive reflections, expensive shadows, heavy post-processing, and unnecessary lighting effects.
+
+A clean, lightweight architectural preview is more important than photorealism.
+
+Provide a useful empty state when no walls have been drawn yet.
+
+14. View Switching and Synchronization
+
+The Plan and 3D View controls must represent different views of the same project.
+
+Switching from Plan to 3D View must not duplicate or transform the actual model.
+
+Switching from 3D View back to Plan must not restore an older copy of the geometry.
+
+After every valid geometry transaction:
+
+1. Validate the updated model.
+2. Commit the change.
+3. Update the 2D rendering.
+4. Update the 3D representation.
+5. Update the contextual inspector if necessary.
+6. Save the project.
+7. Record the operation in undo history.
+
+Do not block normal editing while waiting for an animation.
+
+For larger models, optimize rendering rather than introducing delayed or inconsistent geometry updates.
+
+Do not preserve a separate stale 3D model as application data.
+
+15. Undo and Redo
+
+Implement real undo and redo for geometry operations.
+
+Support at least:
+
+- Create wall.
+- Delete wall.
+- Move wall.
+- Resize wall.
+- Rotate wall.
+- Change wall thickness.
+- Change wall height.
+- Split wall at an intersection.
+- Connect or disconnect endpoints.
+
+Each completed user action must produce one sensible history entry.
+
+Dragging a wall for one continuous movement must not produce hundreds of undo steps.
+
+Use a transaction approach: capture the relevant original state, perform the interaction, and commit a single operation when the interaction ends.
+
+Undo must restore the exact previous geometry and connections.
+
+Redo must restore the corresponding updated geometry.
+
+Do not mutate previous history snapshots.
+
+Keep undo history project-specific.
+
+Clear temporary drag previews on cancellation without creating committed geometry.
+
+Provide clear Undo and Redo controls, with disabled states when no operation is available.
+
+Support common keyboard shortcuts on desktop where appropriate, while preventing them from interfering with text fields.
+
+16. Local Persistence and Project Safety
+
+The application must not require a backend to save ordinary projects.
+
+Use IndexedDB for local project persistence, with versioned project records and safe initialization.
+
+If IndexedDB is unavailable or inaccessible, fail gracefully and display a clear message rather than crashing the application.
+
+Automatic saving
+
+Automatically save project changes.
+
+Show an understandable saving state, such as:
+
+- Saving
+- Saved
+- Unable to Save
+
+Use an appropriate debounce for frequent geometry updates, while ensuring committed edits are not lost.
+
+Do not display Saved before the persistence operation has succeeded.
+
+Handle concurrent save requests in a predictable order so an older save cannot overwrite newer geometry.
+
+Update the project's last-modified date after relevant changes.
+
+Project recovery
+
+On application startup:
+
+- Load existing projects.
+- Validate their stored schemas.
+- Recover valid data.
+- Handle missing or malformed records gracefully.
+- Never crash the entire application because one project record is invalid.
+
+Use safe schema migrations if the data model changes.
+
+Do not silently discard a project's data when a migration fails.
+
+Import and export
+
+Provide an option to export a project as a JSON backup.
+
+Include the project metadata, points, walls, and schema version.
+
+Provide an import function for compatible project JSON files.
+
+Validate all imported data before saving or opening it.
+
+Reject malformed files and explain the error in a readable way.
+
+Do not overwrite an existing project with imported data without explicit confirmation.
+
+Do not execute code contained in imported files.
+
+Keep all project data local unless the user explicitly exports it.
+
+17. PWA Installation and Offline Operation
+
+The application must be a genuine installable PWA rather than simply a responsive webpage.
+
+Implement:
+
+- A valid web app manifest.
+- A suitable application name and short name.
+- Valid icons in appropriate sizes.
+- A theme color and background color.
+- Standalone display mode.
+- Correct viewport configuration.
+- Service worker registration.
+- Caching for the essential application shell and locally bundled assets.
+- Offline startup after the relevant assets have been cached.
+
+Bundle or cache any fonts, icons, and assets required for the core interface.
+
+Do not require a Google API call or another remote service to open the project dashboard or edit a saved plan.
+
+Do not load critical geometry libraries from an external CDN at runtime.
+
+Make sure service-worker caching does not indefinitely serve an incompatible, outdated application after an update.
+
+Provide a safe update strategy that does not unexpectedly discard the user's local project data.
+
+The app must remain useful offline, subject to browser storage availability and the successful initial caching of its application assets.
+
+The PWA must remain compatible with a future Android APK wrapper, but do not build an APK in this phase.
+
+18. Performance and Interaction Reliability
+
+Optimize for ordinary smartphones, including devices with limited memory or graphics performance.
+
+Avoid unnecessary React re-renders during every pointer-move event.
+
+Keep transient drag-preview state separate from committed project geometry.
+
+Use efficient SVG rendering and update only the affected UI when practical.
+
+Do not run expensive geometric validation on every animation frame if it is not necessary.
+
+Do not rebuild the complete 3D scene for every camera movement.
+
+Avoid unnecessary global event listeners.
+
+Avoid duplicate event handlers, leaked listeners, and multiple active animation loops.
+
+Use stable React keys for project cards and geometry objects.
+
+Keep model IDs stable across updates.
+
+Do not rely on array indexes as persistent wall identifiers.
+
+Prevent repeated pointer events from committing duplicate operations.
+
+Handle pointer cancellation, lost pointer capture, browser focus changes, and viewport resizing safely.
+
+Use error boundaries or equivalent error handling to prevent a local UI failure from bringing down the entire application.
+
+Do not swallow errors silently. Log useful development diagnostics and provide an appropriate user-facing message when an operation cannot complete.
+
+19. Accessibility and Interaction Details
+
+Provide:
+
+- Appropriate labels for buttons and inputs.
+- Sufficient contrast.
+- Visible focus indicators.
+- A logical keyboard focus order.
+- Proper dialog focus behavior.
+- Keyboard activation for ordinary buttons.
+- Screen-reader-readable control labels.
+- Disabled states where actions are unavailable.
+- Validation messages associated with their fields.
+
+Do not rely on color alone to communicate selection, connection, or error states.
+
+Provide icons with meaningful labels.
+
+Make numeric editing controls large enough to use on a touchscreen.
+
+Ensure the interface can still be operated without tiny precision-dependent buttons.
+
+20. Explicit Scope Limits for Version 1
+
+The first release must be excellent at basic project creation, wall geometry, independent editing, snapping, persistence, and stable 3D visualization.
+
+Do not add features that distract from these requirements.
+
+Out of scope for the first version:
+
+- Doors and windows.
+- Furniture.
+- Room recognition and automatic room labels.
+- Structural engineering calculations.
+- Building information modeling.
+- Multi-floor management.
+- Team collaboration.
+- Cloud synchronization.
+- User accounts.
+- Payment systems.
+- Photorealistic rendering.
+- Editing geometry directly in the 3D view.
+
+Organize the code so that additional object types can be introduced later without rewriting the wall geometry engine.
+
+Do not implement fake versions of these future features.
+
+21. Automated Tests and Verification
+
+Create meaningful automated tests for the geometry module, snapping logic, and project state operations.
+
+Do not test only that a component renders. Test the underlying mathematical results and data integrity.
+
+Geometry tests
+
+Verify that:
+
+- Distance calculations are correct.
+- Horizontal walls have the expected angle.
+- Vertical walls have the expected angle.
+- Diagonal wall lengths and angles are correct.
+- Angle normalization is consistent.
+- Screen-to-world conversion and world-to-screen conversion are inverse operations within a reasonable floating-point tolerance.
+- Zero-length walls are rejected.
+
+Snapping tests
+
+Verify that:
+
+- A nearby endpoint is detected within the configured screen-space tolerance.
+- A distant endpoint is not snapped accidentally.
+- Endpoint snapping has higher priority than grid snapping.
+- Snapping remains correct at multiple zoom levels.
+- A new wall connected to an existing endpoint references the same point.
+- A valid interior intersection splits the target wall correctly.
+- Wall splitting preserves the original wall's total geometry, thickness, and height.
+- Snapping does not create tiny duplicate segments at existing endpoints.
+
+Selected-wall isolation tests
+
+These tests are critical.
+
+Test that:
+
+1. Three connected walls can be created.
+2. The middle wall can be selected.
+3. Changing the middle wall's length does not change neighboring wall dimensions or positions.
+4. Changing its angle preserves its length.
+5. Moving it does not move other walls.
+6. Moving one endpoint does not move the neighboring walls that previously shared that endpoint.
+7. The moved endpoint can snap to a new valid point.
+8. Undo restores the original endpoint references and geometry.
+9. Redo restores the edited state.
+10. Deleting one wall does not delete other walls or their geometry.
+11. No orphaned or invalid point references remain after editing.
+12. No unintended side effects occur when geometry is changed repeatedly.
+
+Compare both coordinates and model relationships, not just the rendered appearance.
+
+History and persistence tests
+
+Verify that:
+
+- Each committed operation creates one useful history entry.
+- Undo and redo preserve exact geometry.
+- A saved project can be reloaded.
+- Exported JSON can be imported successfully.
+- Invalid imports are rejected.
+- A corrupted record does not crash the complete application.
+- Saving cannot allow an older asynchronous request to overwrite newer project data.
+
+UI and viewport verification
+
+Verify that:
+
+- A newly created wall is selectable immediately.
+- Numeric wall inputs work correctly.
+- Drawing and selection modes do not conflict.
+- Pinching does not accidentally draw walls.
+- The editor is usable at the required mobile widths.
+- The plan and 3D views display consistent geometry.
+- Camera movement does not modify the model.
+- Changing a wall does not reset the camera unexpectedly.
+- No horizontal overflow appears at supported mobile sizes.
+
+Build verification
+
+Before reporting completion:
+
+- Run the available TypeScript checks.
+- Run the production build.
+- Run the available automated tests.
+- Fix all compilation and test errors introduced by the implementation.
+- Check console errors during representative interactions where the environment permits.
+- Verify that the actual application starts successfully.
+
+Do not claim that physical Android-device testing has been completed unless it has actually been performed.
+
+22. Required Acceptance Scenarios
+
+The application is not considered complete merely because the home screen looks polished.
+
+The following scenarios must work end to end.
+
+Scenario A: New project
+
+Create a project named “Test House”.
+
+Verify that the project opens in Plan mode and displays an empty, usable drawing viewport.
+
+Scenario B: Connected walls
+
+Draw four walls forming a rectangle.
+
+The endpoints must snap accurately to form closed corners without visible gaps.
+
+The 3D view must display the same rectangular layout.
+
+Scenario C: Select a wall
+
+Return to the plan and tap one wall.
+
+Verify that the correct wall is selected and that its handles, length, and angle are displayed.
+
+Scenario D: Change length
+
+Set the selected wall's length to 5.00 m.
+
+Verify that the fixed endpoint remains stationary and that the other endpoint moves to produce the correct length.
+
+Verify that unrelated walls are not moved, resized, or rotated.
+
+Scenario E: Change angle
+
+Set the selected wall's angle to 30° while preserving its length.
+
+Verify the actual endpoint coordinates, displayed dimensions, and 3D representation.
+
+Scenario F: Drag an endpoint
+
+Drag one endpoint of a connected wall.
+
+Verify that the selected wall changes without unexpectedly moving neighboring walls.
+
+Verify that snapping and endpoint connection rules work correctly.
+
+Scenario G: Move a wall
+
+Move one selected wall by dragging its body.
+
+Verify that its length and angle remain constant and that unrelated walls do not move.
+
+Scenario H: Undo and redo
+
+Undo each of the preceding operations, then redo them.
+
+Verify that the geometry and point references are restored correctly.
+
+Scenario I: 3D camera
+
+Open 3D View.
+
+Rotate horizontally and vertically, zoom, pan, fit the model, and reset the camera.
+
+Verify that camera controls remain stable and that no geometry is edited.
+
+Scenario J: Model synchronization
+
+Change the plan, switch to 3D View, and verify that the changes appear.
+
+Return to Plan and confirm that the original editing state and geometry remain correct.
+
+Scenario K: Persistence
+
+Close or reload the application after saving.
+
+Verify that the project, walls, dimensions, and connections are restored.
+
+Scenario L: Mobile layout
+
+Verify the interface at the target mobile widths in portrait and landscape orientations.
+
+Ensure that the primary toolbar, contextual wall inspector, viewport, and numeric fields remain accessible.
+
+Scenario M: Offline operation
+
+After the application shell has been cached, disconnect the network and verify that the application can reopen and edit a locally saved project.
+
+23. Final Implementation Priorities
+
+Implement the application in this order:
+
+Priority 1 — Correct data model and geometry
+
+Build the point and wall model, mathematical functions, validation, and independent-edit transaction system.
+
+Priority 2 — Functional 2D plan
+
+Implement drawing, endpoint snapping, selection, wall movement, numeric length editing, angle editing, endpoint editing, pan, and zoom.
+
+Priority 3 — Reliable connections and history
+
+Implement the shared-point model, selected-wall detachment rules, intersection splitting, undo, and redo.
+
+Priority 4 — 3D visualization
+
+Build the real wall meshes and stable orthographic camera controls.
+
+Priority 5 — Saving and PWA
+
+Implement local project persistence, import/export, manifest, service worker, and offline support.
+
+Priority 6 — Visual refinement
+
+Polish the responsive layout, typography, spacing, icons, transitions, controls, and contextual inspector without destabilizing the core functionality.
+
+Priority 7 — Verification
+
+Run the tests and build. Fix defects, verify the acceptance scenarios that can be tested in the available environment, and clearly identify any remaining unverified behavior.
+
+Do not stop after any intermediate priority. Complete all of them.
+
+Final Deliverable
+
+Produce a complete, runnable Planform PWA project.
+
+It must include:
+
+- The full application source code.
+- All required configuration files.
+- The package manifest and dependencies.
+- The complete working 2D plan editor.
+- Precise wall geometry and endpoint snapping.
+- Independent selected-wall editing.
+- Reliable undo and redo.
+- The synchronized, view-only 3D isometric workspace.
+- Stable camera controls.
+- Local project persistence.
+- Project import and export.
+- PWA manifest, icons, and service-worker configuration.
+- Automated geometry and state tests.
+- Responsive, professional mobile UI.
+
+Do not substitute a written explanation, screenshot, or mockup for the actual implementation.
+
+Do not leave core buttons as placeholders.
+
+Do not use fake geometry or mock interactions for the principal features.
+
+Do not hide unfinished behavior behind decorative UI.
+
+The priority is a dependable architectural editing engine presented through a polished, mobile-first experience.
+
+Build the complete application now, then verify it against the acceptance scenarios before declaring it complete.

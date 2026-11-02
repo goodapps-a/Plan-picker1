@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <!-- Architectural grid background inside icon -->
+  <g stroke="#1e293b" stroke-width="4" stroke-dasharray="8 8">
+    <line x1="96" y1="96" x2="416" y2="96" />
+    <line x1="96" y1="176" x2="416" y2="176" />
+    <line x1="96" y1="256" x2="416" y2="256" />
+    <line x1="96" y1="336" x2="416" y2="336" />
+    <line x1="96" y1="416" x2="416" y2="416" />
+    <line x1="96" y1="96" x2="96" y2="416" />
+    <line x1="176" y1="96" x2="176" y2="416" />
+    <line x1="256" y1="96" x2="256" y2="416" />
+    <line x1="336" y1="96" x2="336" y2="416" />
+    <line x1="416" y1="96" x2="416" y2="416" />
+  </g>
+  <!-- Architectural Wall Plan Motif -->
+  <!-- Outer walls -->
+  <path d="M 128 384 L 128 128 L 384 128 L 384 384 L 288 384 L 288 256 L 224 256 L 224 384 Z" 
+        fill="#0284c7" fill-opacity="0.2" stroke="url(#accent)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" />
+  <!-- Interior Wall -->
+  <line x1="224" y1="256" x2="128" y2="256" stroke="#38bdf8" stroke-width="14" stroke-linecap="round" />
+  <!-- Corner Snap Nodes -->
+  <circle cx="128" cy="128" r="14" fill="#38bdf8" stroke="#ffffff" stroke-width="4" />
+  <circle cx="384" cy="128" r="14" fill="#38bdf8" stroke="#ffffff" stroke-width="4" />
+  <circle cx="384" cy="384" r="14" fill="#38bdf8" stroke="#ffffff" stroke-width="4" />
+  <circle cx="128" cy="384" r="14" fill="#38bdf8" stroke="#ffffff" stroke-width="4" />
+  <circle cx="288" cy="384" r="12" fill="#10b981" stroke="#ffffff" stroke-width="4" />
+  <circle cx="224" cy="256" r="12" fill="#f59e0b" stroke="#ffffff" stroke-width="4" />
+</svg>
